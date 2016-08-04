@@ -1,5 +1,6 @@
 """
 Define the Audit2JSON object for parsing audit log files
+Sample python audit processing: https://svn.fedorahosted.org/svn/audit/branches/1.8/auparse/test/auparse_test.py
 """
 
 import sys
