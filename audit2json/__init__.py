@@ -1,1 +1,1 @@
-from core import parse_file
+from core import Audit2JSON
