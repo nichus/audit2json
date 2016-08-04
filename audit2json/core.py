@@ -1,4 +1,5 @@
-"""Define the Audit2JSON object for parsing audit log files
+"""
+Define the Audit2JSON object for parsing audit log files
 """
 
 import sys
@@ -7,9 +8,13 @@ import audit
 from datetime import datetime
 
 class Audit2JSON(object): #pylint: disable=too-few-public-methods
-    """JSONify audit log entries"""
+    """
+    JSONify audit log entries
+    """
     def __init__(self, filename):
-        """Opens the specified audit file and prepares it for processing"""
+        """
+        Opens the specified audit file and prepares it for processing
+        """
         self.auditstream = auparse.AuParser(auparse.AUSOURCE_FILE, filename)
 
         self.auditstream.reset()
@@ -18,8 +23,16 @@ class Audit2JSON(object): #pylint: disable=too-few-public-methods
             print "Error getting first record"
             sys.exit(1)
 
+    def entry_location(self):
+        """
+        Helper function to generate the <filename>:<line#> string
+        """
+        return '%s:%d' % ( self.auditstream.get_filename(), self.auditstream.get_line_number() )
+
     def get_entry(self):
-        """Return the next record from the currently processed audit file"""
+        """
+        Return the next record from the currently processed audit file
+        """
         # remember to 'yield json.dumps(entry)' after the object has been built
         # this will return the object to the caller
 
@@ -39,24 +52,31 @@ class Audit2JSON(object): #pylint: disable=too-few-public-methods
                 headers['fieldcount']   = self.auditstream.get_num_fields()
                 headers['typenum']      = self.auditstream.get_type()
                 headers['type']         = audit.audit_msg_type_to_name(headers['typenum'])
-                headers['location']     = '%s:%d' % ( self.auditstream.get_filename(), self.auditstream.get_line_number() )
+                headers['location']     = self.entry_location()
                 headers['unixtime']     = float("%d.%d" % (timestamp.sec,timestamp.milli))
                 headers['isotime']      = datetime.fromtimestamp(headers['unixtime']).isoformat()
                 headers['serial']       = timestamp.serial
-                headers['host']         = timestamp.host
+                headers['host']         = none_to_null(timestamp.host)
 
+                if headers['typenum'] == 1327:
+                    headers['type']     = 'PROCTITLE'
                 record['headers']       = headers
 
                 fields                  = {}
                 # Field Loop
                 self.auditstream.first_field()
                 while True:
-                    fields[self.auditstream.get_field_name()] = {
-                              'raw':    self.auditstream.get_field_str(),
-                            'value':    self.auditstream.interpret_field()
-                            }
-                    if self.auditstream.get_field_name() == "proctitle":
-                        fields[self.auditstream.get_field_name()]['value'] = self.auditstream.get_field_str().decode("hex").split('\x00')[0]
+                    name    = self.auditstream.get_field_name()
+                    raw     = self.auditstream.get_field_str()
+                    if name != 'type':
+                        fields[name] = {
+                                  'raw':    raw,
+                                'value':    self.auditstream.interpret_field()
+                                }
+                        if name == "proctitle":
+                            fields[name]['value'] = raw.decode("hex")
+                    else:
+                        headers['fieldcount'] -= 1
                     if not self.auditstream.next_field():
                         break
                 record['fields']    = fields
@@ -68,7 +88,9 @@ class Audit2JSON(object): #pylint: disable=too-few-public-methods
                 break
 
 def none_to_null(word):
-    'used so output matches C version'
+    """
+    used so output matches C version
+    """
     if word is None:
         return '(null)'
     else:
