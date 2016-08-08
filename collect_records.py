@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-"""Collects audit records from the local filesystem, and ships them up to the centralized system.
+"""
+Collects audit records from the local filesystem, and ships them up to the centralized system.
 """
 
 
@@ -9,7 +10,9 @@ import glob
 from audit2json import Audit2JSON
 
 def main():
-    """Executable mainline function"""
+    """
+    Executable mainline function
+    """
     if not os.geteuid() == 0:
         print "This script must run as root, engaging sudo-powers..."
         os.execv('/usr/bin/sudo', ['python'] + sys.argv)

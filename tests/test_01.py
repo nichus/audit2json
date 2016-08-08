@@ -1,6 +1,10 @@
 """
 """
-from .context import audit2json
+from .context import Audit2JSON
 
-audit2json.parse_file("tests/audit.log")
+def test_get_entry():
+    stream  = Audit2JSON("tests/audit.log")
+    entry   = next(stream.get_entry(),None)
+    assert entry != None
+    print entry
 
